@@ -1,19 +1,53 @@
 package org.mycompany;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import com.google.cloud.translate.Translate;
+import com.google.cloud.translate.Translation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+
+@ExtendWith(MockitoExtension.class)
 class MyTranslationServiceTest_TODO {
+
+    @Mock
+    private Translate googleTranslate;
+    @Mock
+    private Translation googleTranslation;
 
     /**
      * 1. Happy case test.
      * <p>
-     * When `MyTranslationService::translateWithGoogle` method is called with any sentence and target language is equal to "ru",
-     * `googleTranslate` dependency should be called and `translation.getTranslatedText()` returned.
-     * No other interactions with `googleTranslate` dependency should be invoked apart from a single call to `googleTranslate.translate()`.
+     * When MyTranslationService::translateWithGoogle method is called with any sentence and target language is equal to "ru",
+     * googleTranslate dependency should be called and translation.getTranslatedText() returned.
+     * No other interactions with googleTranslate dependency should be invoked apart from a single call to googleTranslate.translate().
      */
     @Test
     void translateWithGoogle_anySentenceAndTargetLanguageIsRu_success() {
-        //TODO
+        MyTranslationService myTranslationService = new MyTranslationService(googleTranslate);
+
+        String stringToTranslate = "New string";
+        String language = "ru";
+        String expectedString = "Новая строка";
+
+        Mockito.when(googleTranslate.translate(eq(stringToTranslate), any())).thenReturn(googleTranslation);
+        Mockito.when(googleTranslation.getTranslatedText()).thenReturn(expectedString);
+
+        String realResult = myTranslationService.translateWithGoogle(stringToTranslate, language);
+
+        assertEquals(expectedString, realResult);
+
+        Mockito.verify(googleTranslate).translate(eq(stringToTranslate), any());
+        Mockito.verifyNoMoreInteractions(googleTranslate);
+
+        Mockito.verify(googleTranslation).getTranslatedText();
+        Mockito.verifyNoMoreInteractions(googleTranslation);
     }
 
     /**
@@ -24,7 +58,15 @@ class MyTranslationServiceTest_TODO {
      */
     @Test
     void translateWithGoogle_anySentenceAndTargetLanguageIsNotRu_failure() {
-        //TODO
+        MyTranslationService myTranslationService = new MyTranslationService(googleTranslate);
+
+        String stringToTranslate = "New string";
+        String language = "en";
+
+        assertThrows(IllegalArgumentException.class,
+                () -> myTranslationService.translateWithGoogle(stringToTranslate, language));
+
+        Mockito.verifyNoInteractions(googleTranslate);
     }
 
     /**
@@ -36,6 +78,20 @@ class MyTranslationServiceTest_TODO {
      */
     @Test
     void translateWithGoogle_googleTranslateThrowsException_failure() {
-        //TODO
+        MyTranslationService myTranslationService = new MyTranslationService(googleTranslate);
+
+        String stringToTranslate = "New string";
+        String language = "ru";
+
+        Mockito.when(googleTranslate.translate(eq(stringToTranslate), any())).thenThrow(new RuntimeException());
+
+        assertThrows(
+                MyTranslationServiceException.class,
+                () -> myTranslationService.translateWithGoogle(stringToTranslate, language));
+
+        Mockito.verify(googleTranslate).translate(eq(stringToTranslate), any());
+        Mockito.verifyNoMoreInteractions(googleTranslate);
+
+        Mockito.verifyNoInteractions(googleTranslation);
     }
 }
